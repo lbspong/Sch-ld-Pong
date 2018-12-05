@@ -1,0 +1,295 @@
+using System;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
+
+namespace Direction
+{
+    /// <summary>
+    /// This is the main type for your game.
+    /// </summary>
+    public class Game1 : Game
+    {
+        GraphicsDeviceManager graphics;
+        SpriteBatch spriteBatch;
+
+        Texture2D playerTexture;
+        Texture2D logoTexture;
+        
+        Vector2 playerPosition;
+        Vector2 playerDirection = new Vector2(1, 0); //Direction X = 1, Y = 0
+        Rectangle playerCollision;
+
+        Vector2 player2Position;
+        Vector2 player2Direction;
+        Rectangle player2Collision;
+
+
+        //Text coordinates
+        Vector2 ControlsHeader;
+
+        Texture2D ballTexture;
+        Vector2 ballPosition;
+        Vector2 ballDirection;
+        Rectangle ballCollision;
+        float ballSpeed = 7;
+
+        Vector2 logoPos;
+
+        float playerSpeed = 10;
+
+        int width = 1920;
+        int height = 1080;
+
+        int player2Score = 0;
+        int playerScore = 0;
+        int difficulty;
+        int resets = 0;
+
+        SpriteFont font;
+
+        int powerUp1 = 10;
+
+        bool reset = false;
+
+
+        Rectangle background;
+
+        
+
+        public Game1()
+        {
+            graphics = new GraphicsDeviceManager(this);
+
+
+            graphics.PreferredBackBufferWidth = width;
+            graphics.PreferredBackBufferHeight = height;
+            graphics.IsFullScreen = true;
+            graphics.ApplyChanges();
+
+
+            Content.RootDirectory = "Content";
+
+
+           
+
+            Window.Title = "Pong - 4x4";
+            Window.AllowUserResizing = true;
+            Window.IsBorderless = false;
+
+            this.IsMouseVisible = true;
+        }
+
+        /// <summary>
+        /// Allows the game to perform any initialization it needs to before starting to run.
+        /// This is where it can query for any required services and load any non-graphic
+        /// related content.  Calling base.Initialize will enumerate through any components
+        /// and initialize them as well.
+        /// </summary>
+        protected override void Initialize()
+        {
+
+            background = new Rectangle(0, 0, width, height);
+
+            // TODO: Add your initialization logic here
+            //playerPosition
+            playerPosition.X = 0;
+            playerPosition.Y = 600;
+
+            //player2Position
+            player2Position.Y = 100;
+            player2Position.X = width - 25;
+
+            //Controls Header
+            ControlsHeader.X = width / 4;
+            ControlsHeader.Y = 100;
+
+
+            ballPosition.X = width/2;
+            ballPosition.Y = 800;
+            ballDirection = new Vector2(-1, -1);
+            logoPos.X = 10900;
+            logoPos.Y = 100;
+
+            base.Initialize();
+        }
+
+        /// <summary>
+        /// LoadContent will be called once per game and is the place to load
+        /// all of your content.
+        /// </summary>
+        protected override void LoadContent()
+        {
+            // Create a new SpriteBatch, which can be used to draw textures.
+            spriteBatch = new SpriteBatch(GraphicsDevice);
+
+            // TODO: use this.Content to load your game content here
+            playerTexture = Content.Load<Texture2D>("Kvadrat");
+            ballTexture = Content.Load<Texture2D>("ball");
+            logoTexture = Content.Load<Texture2D>("PongLogo");
+            font = Content.Load<SpriteFont>("ScoreFont");
+        }
+
+        /// <summary>
+        /// UnloadContent will be called once per game and is the place to unload
+        /// game-specific content.
+        /// </summary>
+        protected override void UnloadContent()
+        {
+            // TODO: Unload any non ContentManager content here
+        }
+
+        /// <summary>
+        /// Allows the game to run logic such as updating the world,
+        /// checking for collisions, gathering input, and playing audio.
+        /// </summary>
+        /// <param name="gameTime">Provides a snapshot of timing values.</param>
+        protected override void Update(GameTime gameTime)
+        {
+            
+            
+                
+
+            #region If statements
+            // TODO: Add your update logic here
+            playerDirection = Vector2.Zero;
+            player2Direction = Vector2.Zero;
+
+            //Collisions
+            ballCollision = new Rectangle((int)ballPosition.X, (int)ballPosition.Y, ballTexture.Width, ballTexture.Height);
+            playerCollision = new Rectangle((int)playerPosition.X, (int)playerPosition.Y, playerTexture.Width, playerTexture.Height);
+            player2Collision = new Rectangle((int)player2Position.X, (int)player2Position.Y, playerTexture.Width, playerTexture.Height);
+
+            if (Keyboard.GetState().IsKeyDown(Keys.Escape))
+            {
+                player2Score = 0;
+                playerScore = 0;
+                resets = resets + 1;
+            }
+
+            //Player 1 Movement Up n' Down
+            if (Keyboard.GetState().IsKeyDown(Keys.W))
+                playerDirection.Y = -1;
+
+            if (Keyboard.GetState().IsKeyDown(Keys.S))
+                playerDirection.Y = 1;
+
+            //Player 2 Movement Up n' Down
+            if (Keyboard.GetState().IsKeyDown(Keys.Up))
+                player2Direction.Y = -1;
+
+            if (Keyboard.GetState().IsKeyDown(Keys.Down))
+                player2Direction.Y = 1;
+
+            //Teleport from top to bottom
+            if (playerPosition.Y <= 0 - playerTexture.Height)
+                playerPosition.Y = 999 + playerTexture.Height;
+
+            //Teleport from bottom to top
+            if (playerPosition.Y >= height + playerTexture.Height)
+                playerPosition.Y = 0 - playerTexture.Height;
+
+            //Player2 Teleportings
+            //Teleport from top to bottom
+            if (player2Position.Y <= 0 - playerTexture.Height)
+                player2Position.Y = 999 + playerTexture.Height;
+
+            //Teleport from bottom to top
+            if (player2Position.Y >= height + playerTexture.Height)
+                player2Position.Y = 0 - playerTexture.Height;
+
+            #region Ball hitting walls code
+            //Left wall of window
+            if (ballPosition.X < 0)
+            {
+                ballPosition.X = width / 2;
+                ballPosition.Y = 800;
+                player2Score = player2Score + 1;
+            }
+
+            //Top wall of window
+            if (ballPosition.Y < 0)
+                ballDirection.Y *= -1;
+
+
+            ////Bottom wall of window
+            if (ballPosition.Y > height - playerTexture.Width)
+                ballDirection.Y *= -1;
+
+            //Right wall of window
+            if (ballPosition.X > width - playerTexture.Width)
+            {
+                ballPosition.X = width / 2;
+                ballPosition.Y = height/2;
+                player2Score = player2Score + 1;
+            }
+            #endregion
+
+            //Collisions with left paddle
+            if (ballCollision.Intersects(playerCollision))
+            {
+                ballDirection.X *= -1;
+                difficulty = difficulty + 1;
+            }
+
+            if (ballCollision.Intersects(player2Collision))
+            {
+                ballDirection.X *= -1;
+                difficulty = difficulty + 1;
+            }
+
+            playerPosition += playerDirection * playerSpeed;
+            player2Position += player2Direction * playerSpeed;
+            ballPosition += ballDirection * ballSpeed;
+            #endregion
+
+            base.Update(gameTime);
+        }
+
+        /// <summary>
+        /// This is called when the game should draw itself.
+        /// </summary>
+        /// <param name="gameTime">Provides a snapshot of timing values.</param>
+        protected override void Draw(GameTime gameTime)
+        {
+            //Background color
+            GraphicsDevice.Clear(Color.Navy);
+
+           
+            
+
+            // TODO: Add your drawing code here
+            spriteBatch.Begin();
+            spriteBatch.Draw(playerTexture, background, Color.Green);
+            //Draw players
+            spriteBatch.Draw(playerTexture, playerPosition, Color.White);
+            spriteBatch.Draw(playerTexture, player2Position, Color.White);
+            spriteBatch.Draw(logoTexture, logoPos, Color.White);
+
+            
+            //Draw ball
+            spriteBatch.Draw(ballTexture, ballPosition, Color.White);
+
+            //Draw Score Text
+            spriteBatch.DrawString(font, "Score: " + player2Score, new Vector2(player2Position.X - 200, player2Position.Y), Color.White);
+            spriteBatch.DrawString(font, "Score: " + playerScore, new Vector2(playerPosition.X + 50, playerPosition.Y), Color.White);
+
+            //Draw Difficulty Text
+            spriteBatch.DrawString(font, "Difficulty: " + difficulty, new Vector2(width/2- 120, 100), Color.White);
+
+            //Draw Resets Text
+            //spriteBatch.DrawString(font, "Resets: " + resets, new Vector2(width / 2 - 120, 140), Color.White);
+
+            //Draws Controltext
+            //Draw Controlstitle
+            spriteBatch.DrawString(font, "Controls: ", ControlsHeader, Color.White);
+            spriteBatch.DrawString(font, "Player 1 Movement: W & S", new Vector2(ControlsHeader.X, ControlsHeader.Y + 40), Color.White);
+            spriteBatch.DrawString(font, "Player 2 Movement: Up & Down (Arrows)", new Vector2(ControlsHeader.X, ControlsHeader.Y + 80), Color.White);
+            spriteBatch.DrawString(font, "Player 3 Movement:  & Down (Arrows)", new Vector2(ControlsHeader.X, ControlsHeader.Y + 120), Color.White);
+
+            spriteBatch.End();
+
+            base.Draw(gameTime);
+        }
+    }
+}
